@@ -7,5 +7,5 @@ This repository contains scripts used for the analysis of scRNA-seq data from hu
 
 This repository contains:
 * Pre-processing pipeline [[Jeongbin]]
-* R code for CRC organoid scRNA-seq analysis [[Teresa]]
+* R code for CRC organoid scRNA-seq analysis (including a very short script used to run non-negative matrix factorization in MATLAB) 
 * Python scripts for analysing RNA-FISH [[Foo Wei]]
