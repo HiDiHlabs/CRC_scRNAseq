@@ -1,11 +1,8 @@
-# CRC_scRNAseq
-Code for analysing single-cell data from colorectal cancer organoids
+# CRC single cell
 
-This repository contains scripts used for the analysis of scRNA-seq data from human colorectal cancer (CRC) organoids. The corresponding manuscript is available as a pre-print:
-
-* [[LINK TO PAPER]]
+Code for analysing single-cell sequencing and imaging data from colorectal cancer samples, including patient-derived spheroids, organoids, xenografts and primary samples.
 
 This repository contains:
-* Pre-processing pipeline [[Jeongbin]]
-* R code for CRC organoid scRNA-seq analysis
-* Python scripts for analysing RNA-FISH [[Foo Wei]]
+•	R code for CRC scRNA-seq analysis
+•	Python scripts for analysing RNA-FISH data 
+
