@@ -122,15 +122,6 @@ save(GeneSetScores, file="D:/Teresa/Colon-final/FactorScoring/GeneSetScores_topG
 
 # -------------- set cutoff and determine significant gene sets for each cell -------------- 
 
-# OLD - USE NO LONGER -------------------------------------------
-# set cutoff for gene set scores by sd
-sigma <- 1    # 1 -> 10406 sig. sets in 3795 cells, 2 -> 2863 sig. sets in 1871 cells
-cutoffGeneSetScore <- mean(GeneSetScores) + sigma*sd(GeneSetScores)
-
-# determine significant gene sets for each cell
-significantGeneSets <- (GeneSetScores > cutoffGeneSetScore)
-# ---------------------------------------------------------------
-
 sigma <- 1   
 cutoffGeneSetScores <- rep(0,dim(GeneSetScores)[2])
 for (c in 1:length(cutoffGeneSetScores)){
