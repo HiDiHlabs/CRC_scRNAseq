@@ -2,8 +2,8 @@
 ########### Reads / Genes per Cell #####################
 ######################################################
 
-folderpath <- ### INSERT DATA FOLDER HERE ###
-count.matrix <- read.csv(paste(folderpath, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", sep=""),
+data.loc <- ### INSERT DATA FOLDER HERE ###
+count.matrix <- read.csv(paste(data.loc, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", sep=""),
                          row.names = "X")
   
 # ------------- reads per cell -------------------------------------
