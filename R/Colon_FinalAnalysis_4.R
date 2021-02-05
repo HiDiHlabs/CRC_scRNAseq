@@ -14,11 +14,12 @@ library(data.table)
 library(RMThreshold)
 require(RColorBrewer)
 
+data.loc = ### INSERT DATA FOLDER HERE ###
 
 # -------------- prepare expression data -------------- 
 
 # Read in raw counts
-count.matrix <- fread(file = "D:/Teresa/Colon-final/rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", header = T)    
+count.matrix <- fread(file = paste0(data.loc, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv"), header = T)    
 c <- as.data.table(count.matrix)
 all.gene.names <- t(c[,1])
 c[,1] <- NULL
@@ -46,11 +47,10 @@ for (i in 1:length(patnames.un)) {
 }
 
 # select patients
-pids <- c("HD1495-P1", "HD1509-P2", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2596-P6", "HD2779-P7", "HD2791-P8", "HD3192-P9", "HD3254-P10", "HD3371-P11", "POP1-P12")
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8", "HD3254-P10", "HD3371-P11")
+pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8", "P10", "P11")
 idx <- sub("\\-.*","",colnames(log.cpm.matrix.mc)) %in% sub("\\-.*","",selected_pids) 
 log.cpm.matrix.mc <- log.cpm.matrix.mc[,idx]
-
 
 # -------------- construct control gene sets -------------- 
 
@@ -74,7 +74,7 @@ for (i in 1:25){
 NrGenesInBin <- table(bin.membership)
 
 # Read in factor gene lists - use top genes per factor
-CuratedGenes <- read.table("D:/Teresa/Colon-final/NNMF_LGR5/CuratedFactorList.txt",header = T)[1:200,]
+CuratedGenes <- read.table(paste0(data.loc, "NNMF_LGR5/CuratedFactorList.txt"),header = T)[1:200,]
 
 # Calculate average expression in control gene sets for each factor and cell
 CtrlGeneExpression <- matrix(NA, nrow = ncol(log.cpm.matrix.mc), ncol = dim(CuratedGenes)[2])   # row: cell, col: factor
@@ -96,10 +96,7 @@ for (c in 1:ncol(log.cpm.matrix)){
     
   }
 }
-
-save(CtrlGeneExpression, file="D:/Teresa/Colon-final/FactorScoring/CtrlGeneExpression.Rdata")
-
-
+save(CtrlGeneExpression, file=paste0(data.loc, "FactorScoring/CtrlGeneExpression.Rdata"))
 
 # -------------- calculate gene set scores for each cell -------------- 
 
@@ -114,9 +111,7 @@ for (c in 1:ncol(log.cpm.matrix.mc)){
 }
 rownames(GeneSetScores) <- colnames(log.cpm.matrix.mc)
 colnames(GeneSetScores) <-  c(paste0("Factor_", seq(1,dim(GeneSetScores)[2],1)))
-
-save(GeneSetScores, file="D:/Teresa/Colon-final/FactorScoring/GeneSetScores.Rdata")
-
+save(GeneSetScores, file=paste0(data.loc, "FactorScoring/GeneSetScores.Rdata"))
 
 # -------------- set cutoff and determine significant gene sets for each cell -------------- 
 
@@ -153,7 +148,6 @@ for (p in 1:8){
   )
 }
 
-
 # ----------- determine overlap between significantly enriched gene sets across cells ---------- 
 
 hmcol<-colorRampPalette(brewer.pal(11,"RdBu"))(101)
@@ -171,7 +165,7 @@ for (p in 1:NrPatients){
         (sum(significantGeneSets[cells.to.inspect,i])+sum(significantGeneSets[cells.to.inspect,j]))
     }
   }
-  pdf(sprintf("D:/Teresa/Colon-final/FactorScoring/Heatmap_GeneSetOverlap_Pat_%s.pdf", selected_pids[p]),width=6,height=6,paper='special') 
+  pdf(sprintf(paste0(data.loc, "FactorScoring/Heatmap_GeneSetOverlap_Pat_%s.pdf"), selected_pids[p]),width=6,height=6,paper='special') 
   heatmap(OverlapArray[p,,], 
           scale="none",
           main=selected_pids[p],
@@ -180,7 +174,6 @@ for (p in 1:NrPatients){
   )
   dev.off()
 }
-
 
 # ----------- binary heatmap with positive factors per cell ---------- 
 
@@ -199,7 +192,7 @@ for (p in 1:NrPatients){
         (sum(significantGeneSets[cells.to.inspect,i])+sum(significantGeneSets[cells.to.inspect,j]))
     }
   }
-  pdf(sprintf("D:/Teresa/Colon-final/FactorScoring/Heatmap_GeneSetOverlap_Pat_%s.pdf", selected_pids[p]),width=6,height=6,paper='special') 
+  pdf(sprintf(paste0(data.loc, "FactorScoring/Heatmap_GeneSetOverlap_Pat_%s.pdf"), selected_pids[p]),width=6,height=6,paper='special') 
   heatmap(significantGeneSets[p,,], 
           scale="none",
           main=selected_pids[p],
@@ -209,7 +202,6 @@ for (p in 1:NrPatients){
   dev.off()
 }
 
-
 # ------------ Create heatmap --------------------------------------------------------
 
 # collate data for heatmap
@@ -218,7 +210,7 @@ hm.data <- significantGeneSets
 hm.data_log <- log(hm.data+0.001)
 
 # load annotations for heatmap
-load("D:/Teresa/Colon-final/MetaData_allCells_forHeatmaps.Rdata")
+load(paste0(data.loc, "MetaData_allCells_forHeatmaps.Rdata"))
 
 MetaData_selectedCells <- MetaData_allCells[sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids),]
 # drop factor levels that are not in the selected data frame
@@ -245,7 +237,7 @@ ann_colors = list(PatID_long = VarColors1,
 nmf.options(grid.patch=TRUE)
 
 # plot heatmap
-pdf("D:/Teresa/Colon-final/FactorScoring/heatmap_factors_binary.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "FactorScoring/heatmap_factors_binary.pdf"),width=20,height=9,paper='special') 
 aheatmap(hm.data,
          color = "-Spectral:100", breaks = NA, border_color = NA,
          scale = "none",
@@ -259,17 +251,15 @@ aheatmap(hm.data,
 )
 dev.off()
 
-
-pdf("D:/Teresa/Colon-final/FactorScoring/heatmap_factors_binary.pdf",width=5,height=9,paper='special') 
+pdf(paste0(data.loc, "FactorScoring/heatmap_factors_binary.pdf"),width=5,height=9,paper='special') 
 aheatmap(matrix(as.numeric(hm.data), nrow = nrow(hm.data),  ncol = ncol(hm.data)),
          color = c("white", "black"),
          breaks  = NA
 )
 dev.off()
 
-
 binaryMat <- t(matrix(as.numeric(hm.data), nrow = nrow(hm.data),  ncol = ncol(hm.data)))
-pdf("D:/Teresa/Colon-final/FactorScoring/heatmap_factors_binary.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "FactorScoring/heatmap_factors_binary.pdf"),width=20,height=9,paper='special') 
 NMF::aheatmap(binaryMat, 
               scale="none", 
               revC=TRUE, 
@@ -280,5 +270,3 @@ NMF::aheatmap(binaryMat,
               color = c("white", "black")
               )
 dev.off()
-
-
