@@ -10,23 +10,22 @@ require(gplots)
 require(GMD)
 require(qlcMatrix)
 
-
 # ------------ Load mean-centered colon data   (which we used for NNMF) ----------------------------------------
 
-counts <- read.csv("D:/Teresa/Colon-final/NNMF_LGR5/NMFinput_LGR5.csv", header = TRUE, row.names = 1)
+data.loc = ### INSERT DATA FOLDER HERE ###
 
-pids <- c("HD1495-P1", "HD1509-P2", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2596-P6", "HD2779-P7", "HD2791-P8", "HD3192-P9", "HD3254-P10", "HD3371-P11", "POP1-P12")
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8", "HD3254-P10", "HD3371-P11")
+counts <- read.csv(paste0(data.loc, "NNMF_LGR5/NMFinput_LGR5.csv"), header = TRUE, row.names = 1)
 
-factors <- read.table("D:/Teresa/Colon-final/NNMF_LGR5/CuratedFactorList.txt", sep="\t", header=T)
+pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8", "P10", "P11")
+
+factors <- read.table(paste0(data.loc, "NNMF_LGR5/CuratedFactorList.txt"), sep="\t", header=T)
 NrFactors <- dim(factors)[2]
 factorIDs <- as.numeric(sub(".*\\_","",colnames(factors)))
 
 colNames <- colnames(counts)
 colPatIDs <- sub("-.*$","",colnames(counts))
 colPatIDs <- as.numeric(factor(colPatIDs))
-
-
 
 # ------------ Create matrix of cell scores using merged gene lists ---------------------------------
 
@@ -65,11 +64,7 @@ rownames(CellScoresMatrix) <- c("Immune_response", "Hypoxia/Glycolysis", "Cell_c
                                 "MYC", "Stem", "DCS", "Fatty_acid")
 colnames(CellScoresMatrix) <- colNames
 
-save(CellScoresMatrix, file="D:/Teresa/Colon-final/CellScoresMatrix_mergedTop200FromFactors.Rdata")
-
-
-
-
+save(CellScoresMatrix, file = paste0(data.loc, "CellScoresMatrix_mergedTop200FromFactors.Rdata"))
 
 # ------------ Create heatmap --------------------------------------------------------
 
@@ -127,7 +122,6 @@ ann_colors = list(PatID_long = VarColors1,
 
 nmf.options(grid.patch=TRUE)
 
-
 # plot heatmap
 
 library(colorRamps)
@@ -135,7 +129,7 @@ cmap <- matlab.like2(101)
 
 x_cutoff <- 1.5
 
-pdf("D:/Teresa/Colon-final/heatmap_mergedTop200FromFactors_allCells_correlation_complete.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "heatmap_mergedTop200FromFactors_allCells_correlation_complete.pdf"),width=20,height=9,paper='special') 
 aheatmap(hm.data,
          color = cmap, breaks = seq(0, x_cutoff, x_cutoff/100), border_color = NA,
          scale = "none",
@@ -148,6 +142,3 @@ aheatmap(hm.data,
          cexRow = 0.8, cexCol = 1.2, labCol = NA
 )
 dev.off()
-
-
-
