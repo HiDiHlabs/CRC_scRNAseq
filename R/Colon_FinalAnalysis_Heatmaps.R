@@ -10,15 +10,16 @@ require(gplots)
 require(GMD)
 require(qlcMatrix)
 
-
 # ------------ Load mean-centered colon data   (which we used for NNMF) ----------------------------------------
 
-counts <- read.csv("D:/Teresa/Colon-final/NNMF_LGR5/NMFinput_LGR5.csv", header = TRUE, row.names = 1)
+data.loc = ### INSERT DATA FOLDER HERE ###
 
-pids <- c("HD1495-P1", "HD1509-P2", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2596-P6", "HD2779-P7", "HD2791-P8", "HD3192-P9", "HD3254-P10", "HD3371-P11", "POP1-P12")
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8", "HD3254-P10", "HD3371-P11")
+counts <- read.csv(paste0(data.loc, "NNMF_LGR5/NMFinput_LGR5.csv"), header = TRUE, row.names = 1)
 
-factors <- read.table("D:/Teresa/Colon-final/NNMF_LGR5/CuratedFactorList.txt", sep="\t", header=T)
+pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8", "P10", "P11")
+
+factors <- read.table(paste0(data.loc, "NNMF_LGR5/CuratedFactorList.txt"), sep="\t", header=T)
 NrFactors <- dim(factors)[2]
 factorIDs <- as.numeric(sub(".*\\_","",colnames(factors)))
 
@@ -26,14 +27,12 @@ colNames <- colnames(counts)
 colPatIDs <- sub("-.*$","",colnames(counts))
 colPatIDs <- as.numeric(factor(colPatIDs))
 
-
-
 # ------------ Create matrix of cell scores:  (A) using factor scores for each cell ---------------------------------
 
 CellScoresMatrix <- matrix(NA, nrow=NrFactors, ncol=dim(counts)[2])
 
 for (f in 1:NrFactors){
-  scores.in <- as.matrix(read.csv(sprintf("D:/Teresa/Colon-final/NNMF_LGR5/Cells_k25_Factor_%s.csv", factorIDs[f]), row.names=1))
+  scores.in <- as.matrix(read.csv(sprintf(paste0(data.loc, "NNMF_LGR5/Cells_k25_Factor_%s.csv"), factorIDs[f]), row.names=1))
   for (c in 1:length(colNames)){
     CellScoresMatrix[f,c] <- scores.in[gsub("\\.","\\-",colNames[c]),1]
   }
@@ -45,9 +44,7 @@ rownames(CellScoresMatrix) <- c("G2/M", "G1/S", "MYC",
                                 "Stem", "DCS")
 colnames(CellScoresMatrix) <- colNames
 
-save(CellScoresMatrix, file="D:/Teresa/Colon-final/CellScoresMatrix_factorScores.Rdata")
-
-
+save(CellScoresMatrix, file=paste0(data.loc, "CellScoresMatrix_factorScores.Rdata"))
 
 # ------------ Create matrix of cell scores:  (B) using mean expression of top N genes in factor for each cell ---------------------------------
 
@@ -65,10 +62,10 @@ rownames(CellScoresMatrix_tG) <- c("G2/M", "G1/S", "MYC",
                                 "OXPHOS_1", "OXPHOS_2", "Fatty_Acid", "Hypoxia/Glycolysis_1",  "Hypoxia/Glycolysis_2",
                                 "TNFa/NFkB_1", "TNFa/NFkB_2", "Stress", 
                                 "Stem", "DCS")
+
 colnames(CellScoresMatrix_tG) <- colNames
 
-save(CellScoresMatrix_tG, file="D:/Teresa/Colon-final/CellScoresMatrix_top200genes.Rdata")
-
+save(CellScoresMatrix_tG, file=paste0(data.loc, "CellScoresMatrix_top200genes.Rdata"))
 
 # ------------ Create heatmap --------------------------------------------------------
 
@@ -133,7 +130,7 @@ cmap <- matlab.like2(101)
 
 x_cutoff <- 1.5
 
-pdf("D:/Teresa/Colon-final/heatmap_curatedFactors_top200g_allCells_correlation_complete_differentColorScale.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "heatmap_curatedFactors_top200g_allCells_correlation_complete_differentColorScale.pdf"),width=20,height=9,paper='special') 
 aheatmap(hm.data,
          color = cmap, breaks = seq(0, x_cutoff, x_cutoff/100), border_color = NA,
          scale = "none",
@@ -146,6 +143,3 @@ aheatmap(hm.data,
          cexRow = 0.8, cexCol = 1.2, labCol = NA
 )
 dev.off()
-
-
-
