@@ -16,8 +16,7 @@ library("data.table")
 library("metaMA")
 library("RMThreshold")
 
-folderpath <- "D:/Teresa/Colon-final/"
-
+data.loc = ### INSERT DATA FOLDER HERE ###
 
 ######################################################
 ########### 1. Data Overview #########################
@@ -38,13 +37,13 @@ oldpids <- c("90121", "90130", "92047", "92492", "92074", "92589", "91526", "100
 pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
 colors <- brewer.pal(12, "Set3")
 
-cds <- read.csv(paste(folderpath, "resources/GRCh37_protein_coding.csv", sep=""))[,1]
+cds <- read.csv(paste(data.loc, "resources/GRCh37_protein_coding.csv", sep=""))[,1]
 
 print("Loading expression matrices...")
 col <- c()
 for (i in 1:12) {
   printf("PID: %s\n", oldpids[i])
-  load(sprintf(paste(folderpath, "rawdata/expression-%s-%d_%d_%d_%d.Rdata", sep=""), oldpids[i], total_reads, coding_genes, mito_frac, non_genic_frac))
+  load(sprintf(paste(data.loc, "rawdata/expression-%s-%d_%d_%d_%d.Rdata", sep=""), oldpids[i], total_reads, coding_genes, mito_frac, non_genic_frac))
   
   outliers <- c()
   if (oldpids[i] == "92074") {
@@ -72,7 +71,7 @@ for (i in 1:12) {
   col <- c(col, rep(colors[i], ncol(expression.matrices$count)))
 }
 
-write.csv(count.matrix, file = paste(folderpath, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", sep=""))
+write.csv(count.matrix, file = paste(data.loc, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", sep=""))
 
 
 ################################################################################################################
@@ -80,14 +79,13 @@ write.csv(count.matrix, file = paste(folderpath, "rawdata/AllPatients_counts_noM
 ################################################################################################################
 
 # # if necessary: load count.matrix from csv file
-# count.matrix <- fread(file = paste(folderpath, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", sep=""), header = T)    
+# count.matrix <- fread(file = paste(data.loc, "rawdata/AllPatients_counts_noMeanCen_noLogTrans_incl12.csv", sep=""), header = T)    
 # c <- as.data.table(count.matrix)
 # all.gene.names <- t(c[,1])
 # c[,1] <- NULL
 # count.matrix <- as.matrix(c)
 # rownames(count.matrix) <- all.gene.names
 # rm(c)
-
 
 ### ---------------- cpm normalisation -------------------------------
 tot.exp <- colSums(count.matrix)/1e6
@@ -110,8 +108,6 @@ for (i in 1:length(patnames.un)) {
   log.cpm.matrix.mc <- cbind(log.cpm.matrix.mc, to.mc)
 }
 
-
-
 ### ----------------- Create Seurat objects for PCA, plotting etc.  (colon.nmc = not mean centered) ----------
 colon.nmc <- CreateSeuratObject(log.cpm.matrix, min.cells = 0, min.genes = 0, is.expr = -Inf, project = "Colon", names.field = 1, names.delim = "-")
 colon.nmc@var.genes <- rownames(log.cpm.matrix)
@@ -124,8 +120,6 @@ colon.mc@var.genes <- rownames(log.cpm.matrix.mc)
 colon.mc@data <- colon.mc@raw.data
 colon.mc@scale.data <- colon.mc@raw.data
 
-
-
 ### ----------------- percent.mito per cell -----------------------
 
 mito.genes <- grep(pattern = "^MT-", x = rownames(x = colon.mc@data), value = TRUE)
@@ -135,20 +129,17 @@ percent.mito <- Matrix::colSums(colon.mc@raw.data[mito.genes, ])/Matrix::colSums
 colon.mc <- AddMetaData(object = colon.mc, metadata = percent.mito, col.name = "percent.mito")
 VlnPlot(object = colon.mc, features.plot = c("nGene", "nUMI", "percent.mito"), nCol = 3)
 
-
 ### ----------------------- PCA and tSNE ------------------------------
 
 # Select mean-centered or not data
 colon <- colon.nmc     # select colon.mc or colon.nmc
-
-
 
 # Perform PCA and clustering
 colon <- RunPCA(object = colon, pc.genes = colon@var.genes, do.print = TRUE, pcs.print = 1:5, genes.print = 5)
 colon <- ProjectPCA(object = colon, do.print = FALSE)
 
 # Look at standard deviations of PCs to draw cutoff where there is a clear elbow in the graph
-filename <- paste0(folderpath,"PCElbowplot.pdf")
+filename <- paste0(data.loc,"PCElbowplot.pdf")
 pdf(filename,width=4,height=4,paper='special') 
 PCElbowPlot(object = colon)  
 dev.off()
@@ -156,7 +147,7 @@ dev.off()
 sigPC = 10
 
 # Viz PCA top genes
-filename <- paste0(folderpath, "VizPCATopGenes.pdf")
+filename <- paste0(data.loc, "VizPCATopGenes.pdf")
 pdf(filename,width=4,height=8,paper='special') 
 VizPCA(object = colon, pcs.use = 1:9)
 dev.off()
@@ -175,25 +166,23 @@ colon <- StashIdent(object = colon, save.name = "ClusterNames_0.8")
 colon <- RunTSNE(object = colon, dims.use = 1:sigPC, do.fast = TRUE)
 
 # Save Seurat object
-save(colon, file = paste0(folderpath, "Colon_SeuratObject_after_tSNE.Rdata"))
+save(colon, file = paste0(data.loc, "Colon_SeuratObject_after_tSNE.Rdata"))
 
 # Save gene loadings of all genes in PCs 1-20
 for (pc in 1:20){
   gene.loadings <- colon@dr$pca@gene.loadings.full[,pc]
   gene.loadings.rank <- gene.loadings
   gene.loadings <- gene.loadings[order(-gene.loadings.rank)]
-  write.csv(gene.loadings, file=paste0(folderpath,sprintf("GeneLoadings_full_PC_%s.csv",pc)))
+  write.csv(gene.loadings, file=paste0(data.loc,sprintf("GeneLoadings_full_PC_%s.csv",pc)))
 }
-
-
 
 ### ----------------------- PCA and tSNE plots ------------------------------
 
-# colon <- load(paste0(folderpath, "12patients_MC/Colon_SeuratObject_after_tSNE.Rdata"))
+# colon <- load(paste0(data.loc, "12patients_MC/Colon_SeuratObject_after_tSNE.Rdata"))
 
 # Heatmap of cells and genes ordered according to PCA scores 
 # (cells.use = n 'extreme' cells on both ends of the spectrum)
-filename <- paste0(folderpath, "PCHeatmap.pdf")
+filename <- paste0(data.loc, "PCHeatmap.pdf")
 
 pdf(filename,width=8,height=8,paper='special') 
 PCHeatmap(object = colon, 
@@ -205,28 +194,23 @@ PCHeatmap(object = colon,
           disp.max = 5)
 dev.off()
 
-
 # PCA plot labelled by Cluster IDs and Patient IDs
 plot1 <- PCAPlot(object = colon, dim.1 = 1, dim.2 = 2, do.return = TRUE, group.by = "ClusterNames_0.6", no.legend = F, do.label = F)
 plot2 <- PCAPlot(object = colon, dim.1 = 1, dim.2 = 2, do.return = TRUE, group.by = "orig.ident", no.legend = F, do.label = F)
-filename <- paste0(folderpath, "PCAPlot_byClusterID_byPatientID.pdf")
+filename <- paste0(data.loc, "PCAPlot_byClusterID_byPatientID.pdf")
 pdf(filename,width=16,height=7,paper='special') 
 plot_grid(plot1, plot2, labels = c("Cluster ID", "Patient ID"), hjust = -1, vjust = 2)
 dev.off()
-
 
 # tSNE plot labelled by Cluster IDs and Patient IDs
 plot1 <- TSNEPlot(object = colon, dim.1 = 1, dim.2 = 2, do.return = TRUE, group.by = "ClusterNames_0.6", no.legend = F, do.label = F)
 plot2 <- TSNEPlot(object = colon, dim.1 = 1, dim.2 = 2, do.return = TRUE, group.by = "orig.ident", no.legend = F, do.label = F)
-filename <- paste0(folderpath, "TSNEPlot_byClusterID_byPatientID.pdf")
+filename <- paste0(data.loc, "TSNEPlot_byClusterID_byPatientID.pdf")
 pdf(filename,width=16,height=7,paper='special') 
 plot_grid(plot1, plot2, labels = c("Cluster ID", "Patient ID"), hjust = -1, vjust = 2)
 dev.off()
 
-
 colon.nmc <- colon # colon.mc or colon.mmc 
-
-
 
 ### ----------------------- DEA for each patient ------------------------------
 
@@ -248,13 +232,13 @@ colon <- SetAllIdent(object = colon, id = "PatID")
     DEgenes_up <- DEgenes_up[order(-DEgenes_up$avg_logFC),]
     DEgenes_down <- all_markers[which(as.logical((all_markers$cluster==clusterIDs[c])*(all_markers$avg_logFC<0))),]
     DEgenes_down <- DEgenes_down[order(DEgenes_down$avg_logFC),]
-    write.csv(DEgenes_up, file=paste0(folderpath, sprintf("Cluster_%s_",clusterIDs[c]), "DEgenes_up.csv"))
-    write.csv(DEgenes_down, file=paste0(folderpath, sprintf("Cluster_%s_",clusterIDs[c]), "DEgenes_down.csv"))
+    write.csv(DEgenes_up, file=paste0(data.loc, sprintf("Cluster_%s_",clusterIDs[c]), "DEgenes_up.csv"))
+    write.csv(DEgenes_down, file=paste0(data.loc, sprintf("Cluster_%s_",clusterIDs[c]), "DEgenes_down.csv"))
 
   }
   
 
-    save(all_markers, file=paste0(folderpath, sprintf("AllMarkers_eachPatient.Rdata")))
+    save(all_markers, file=paste0(data.loc, sprintf("AllMarkers_eachPatient.Rdata")))
 
     
 ### ----------------------- DEA for each cluster ------------------------------
@@ -277,11 +261,11 @@ colon <- SetAllIdent(object = colon, id = "PatID")
     DEgenes_up <- DEgenes_up[order(-DEgenes_up$avg_logFC),]
     DEgenes_down <- all_markers[which(as.logical((all_markers$cluster==c)*(all_markers$avg_logFC<0))),]
     DEgenes_down <- DEgenes_down[order(DEgenes_down$avg_logFC),]
-    write.csv(DEgenes_up, file=paste0(folderpath, sprintf("Cluster_%s_",c), "DEgenes_up.csv"))
-    write.csv(DEgenes_down, file=paste0(folderpath, sprintf("Cluster_%s_",c), "DEgenes_down.csv"))
+    write.csv(DEgenes_up, file=paste0(data.loc, sprintf("Cluster_%s_",c), "DEgenes_up.csv"))
+    write.csv(DEgenes_down, file=paste0(data.loc, sprintf("Cluster_%s_",c), "DEgenes_down.csv"))
   }
   
-  save(all_markers, file=paste0(folderpath, sprintf("AllMarkers_eachCluster.Rdata")))
+  save(all_markers, file=paste0(data.loc, sprintf("AllMarkers_eachCluster.Rdata")))
 
 
 
@@ -292,7 +276,7 @@ Ngenes <- 10   # number of top genes to include
 
 # collate data for heatmap
   
-  load("D:/Teresa/Colon-final/DEA_eachPatient/AllMarkers_eachPatient.Rdata")    # loads all_markers
+  load(paste0(data.loc, "DEA_eachPatient/AllMarkers_eachPatient.Rdata"))    # loads all_markers
   clusterIDs <- unique(all_markers$cluster)
 for (c in 1:length(clusterIDs)){
   # sort DE genes by avg_logFC
@@ -308,7 +292,6 @@ top.genes <- unique(top.genes)
 
 colon <- colon.nmc
 hm.data <- colon@data[top.genes,]
-
 
 # collate annotations for heatmap
 
@@ -354,14 +337,13 @@ ann_colors = list(PatID_long = VarColors1,
                   SampleOrigin = VarColors2,
                   MS = VarColors3,
                   CMS = VarColors4)
-
+       
 # plot heatmap
 
 # select which cells to include
-#cellIDs <- c(1:10,501:510,1001:1010,1501:1510,2001:2010)
 cellIDs <- 1:4661
 
-pdf("D:/Teresa/Colon-final/heatmap.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "heatmap.pdf",width=20,height=9,paper='special') 
 aheatmap(hm.data[,cellIDs],
          color = "-RdYlBu2:100", breaks = NA, border_color = NA,
          scale = "none",
@@ -374,19 +356,17 @@ aheatmap(hm.data[,cellIDs],
 )
 dev.off()
 
-
 ### ------------ hierarchical clustering based on top 30 PC1+/- genes for mean-centered data -----------
 
 Ngenes <- 30   # number of top genes to include
 
 # collate data for heatmap
 
-top.genes <- as.character(read.csv("D:/Teresa/Colon-final/12Patients_MC/GeneLoadings_full_PC_1.csv")$X)  # loads all_markers
+top.genes <- as.character(read.csv(paste0(data.loc, "12Patients_MC/GeneLoadings_full_PC_1.csv"))$X)  # loads all_markers
 top.genes <- c(top.genes[1:30], top.genes[(length(top.genes)-29):length(top.genes)])
 
 colon <- colon.mc
 hm.data <- colon@data[top.genes,]
-
 
 # collate annotations for heatmap
 
@@ -420,7 +400,6 @@ colnames(hm.ann.col) <- "PatientID"
 hm.ann.rows <- data.frame(c(rep("up", 30), rep("down", 30)))
 colnames(hm.ann.rows) <- "PC1"
 
-
 # Specify colors for meta data in heatmap
 VarColors1 = brewer.pal(12, "Set3")
 names(VarColors1) = unique(as.matrix(hm.ann.col))
@@ -428,14 +407,12 @@ VarColors2 = brewer.pal(2, "Set3")
 names(VarColors2) = c("up", "down")
 ann_colors = list(PatientID = VarColors1,
                   PC1 = VarColors2)
-
-
-
+    
 nmf.options(grid.patch=TRUE)
 
 # plot heatmap
 
-pdf("D:/Teresa/Colon-final/heatmap_PC1_centerRow.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "heatmap_PC1_centerRow.pdf"),width=20,height=9,paper='special') 
 aheatmap(hm.data,
          color = "-RdYlBu2:100", breaks = seq(from = -2, to = 2, by = 0.04), border_color = NA,
          scale = "row",
@@ -449,7 +426,7 @@ aheatmap(hm.data,
 )
 dev.off()
 
-pdf("D:/Teresa/Colon-final/heatmap_PC1.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "heatmap_PC1.pdf"),width=20,height=9,paper='special') 
 aheatmap(hm.data,
          color = "-RdYlBu2:100", breaks = NA, border_color = NA,
          scale = "none",
@@ -462,28 +439,3 @@ aheatmap(hm.data,
          cexRow = 1.2, cexCol = 1.2, labCol = NA
 )
 dev.off()
-
-
-
-
-
-###############################################################################################################
-
-## Check whether or not to include HD1509
-
-idx <- (sub("\\-.*","",colnames(colon@scale.data)) == "HD1509")
-
-a <- colon@scale.data["LGR5",idx]
-hist(a)
-
-a <- count.matrix["LGR5",idx]
-hist(a)
-
-sum(a>0)  # is 9
-a[a>0]
-
-
-
-
-######################################################################################
-
