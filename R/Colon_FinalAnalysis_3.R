@@ -8,7 +8,7 @@ library(MetaDE)
 library(colorspace)
 library(GMD)
 
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8")
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8")
 idx <- colon@meta.data$orig.ident %in% sub("\\-.*","",selected_pids)
 colon.v <- SubsetData(colon, cells.use = colon@cell.names[idx])
 colon.v <- FindVariableGenes(colon.v, mean.function = ExpMean,
@@ -23,15 +23,11 @@ data.pos <- data
 data.pos[data.pos < 0] <- 0
 # res <- nmf(data.pos, 25) -- very slow in R!
 
+write.csv(data.pos, file = paste0(data.loc, "NMFinput_Liver.csv"))
 
-
-write.csv(data.pos, file = "D:/Teresa/Colon-final/NMFinput_Liver.csv")
-
-
-## -----------------------------------------------------
+## ----------------------------------------------------
 ## ---------- run NNMF in MATLAB -----------------------
 ## -----------------------------------------------------
-
 
 ## Select which k was used
 ks <- c("k15","k20","k25")
@@ -39,13 +35,10 @@ kn <- c(15,20,25)
 
 k=3
 
-## Plot
-
-nnmf.genes <- as.matrix(read.csv(paste0("D:/Teresa/Colon-final/NNMF_Liver/nnmf_Liver_genes_",ks[k],"_defaultParams.csv"), header=F))
-nnmf.cells <- read.csv(paste0("D:/Teresa/Colon-final/NNMF_Liver/nnmf_Liver_cells_",ks[k],"_defaultParams.csv"), header=F)
+nnmf.genes <- as.matrix(read.csv(paste0(data.loc, "NNMF_Liver/nnmf_Liver_genes_",ks[k],"_defaultParams.csv"), header=F))
+nnmf.cells <- read.csv(paste0(data.loc, "NNMF_Liver/nnmf_Liver_cells_",ks[k],"_defaultParams.csv"), header=F)
 
 n <- as.matrix(nnmf.genes)
-
 
 clustfun <- function(x){
   h <- hclust(x, method = "ward.D2")
@@ -75,7 +68,6 @@ heatmap.2(log(n+1),
           hclustfun = clustfun
 )
 
-
 ## ---------- Save lists of genes & cells sorted by representation in NNMF factors -----------
 
 gene.list <- rownames(colon.v@data)
@@ -87,7 +79,7 @@ for (i in 1:kn[k]){
   i_order <- sort(nnmf.genes[,i], index.return = T)
   i_save <- rev(i_order$x)
   names(i_save) <- gene.list[rev(i_order$ix)]
-  write.csv(i_save, file=sprintf(paste0("D:/Teresa/Colon-final/NNMF_Liver/Genes_",ks[k],"_Factor_%s.csv"), i))
+  write.csv(i_save, file=sprintf(paste0(data.loc, "NNMF_Liver/Genes_",ks[k],"_Factor_%s.csv"), i))
   
   # store top 200 genes per factor in separate matrix
   if (i==1){
@@ -100,19 +92,15 @@ for (i in 1:kn[k]){
   i_order <- sort(nnmf.cells[,i], index.return = T)
   i_save <- rev(i_order$x)
   names(i_save) <- cell.list[rev(i_order$ix)]
-  write.csv(i_save, file=sprintf(paste0("D:/Teresa/Colon-final/NNMF_Liver/Cells_",ks[k],"_Factor_%s.csv"), i)) 
-  
+  write.csv(i_save, file=sprintf(paste0(data.loc, "NNMF_Liver/Cells_",ks[k],"_Factor_%s.csv"), i)) 
 }
 
 out <- data.frame(factor = rep(1:kn[k],each=200),
                   gene = names(top200),
                   score = top200)
-write.csv(out, file="D:/Teresa/Colon-final/NNMF_Liver/AllFactors_top200genes.csv")
-
-
+write.csv(out, file=paste0(data.loc, "NNMF_Liver/AllFactors_top200genes.csv"))
 
 ## ---------- Violin plots to determine if any factors are patient-specific 
-
 
 require(ggplot2)
 require(reshape2)
@@ -120,12 +108,12 @@ require(RColorBrewer)
 library(data.table)
 
 for (i in 1:kn[k]){
-  scores.in <- as.data.table(read.csv(sprintf(paste0("D:/Teresa/Colon-final/NNMF_Liver/Cells_",ks[k],"_Factor_%s.csv"), i)))
+  scores.in <- as.data.table(read.csv(sprintf(paste0(data.loc, "NNMF_Liver/Cells_",ks[k],"_Factor_%s.csv"), i)))
   colnames(scores.in) <- c("patient","score")
   scores.in$patient <- sub("-.*$","",scores.in$patient)
   
   
-  pdf(sprintf("D:/Teresa/Colon-final/NNMF_Liver/CellScores_perFactor_%s.pdf", i),width=18,height=6,paper='special') 
+  pdf(sprintf(paste0(data.loc, "NNMF_Liver/CellScores_perFactor_%s.pdf"), i),width=18,height=6,paper='special') 
   
   print(ggplot(data = scores.in, aes(x=patient, y=score, fill=patient)) + 
           geom_violin(trim=T) +
@@ -136,10 +124,7 @@ for (i in 1:kn[k]){
           theme(legend.position="none"))
   
   dev.off()
-  
 }
-
-
 
 ## --------- Cell score distributions for each factor and patient --> overlap -------------------
 
@@ -151,12 +136,12 @@ pids_short <- sub("-.*$","",selected_pids)
 
 for (i in 1:kn[k]){
   
-  scores.in <- as.data.table(read.csv(sprintf(paste0("D:/Teresa/Colon-final/NNMF_Liver/Cells_",ks[k],"_Factor_%s.csv"), i)))
+  scores.in <- as.data.table(read.csv(sprintf(paste0(data.loc, "NNMF_Liver/Cells_",ks[k],"_Factor_%s.csv"), i)))
   colnames(scores.in) <- c("patient","score")
   scores.in$patient <- sub("-.*$","",scores.in$patient)
   
   # Plot histogram  
-  pdf(sprintf(paste0("D:/Teresa/Colon-final/NNMF_Liver/",ks[k],"/CellScores_perPatient_Hist_Factor_%s.pdf"), i),width=8,height=6,paper='special') 
+  pdf(sprintf(paste0(data.loc, "NNMF_Liver/",ks[k],"/CellScores_perPatient_Hist_Factor_%s.pdf"), i),width=8,height=6,paper='special') 
   
   print(ggplot(scores.in,aes(x=score, fill=patient)) + 
           geom_histogram(data=subset(scores.in,patient == pids_short[1]), col="grey", alpha = 0.3, bins = 25, position="dodge") +
@@ -171,7 +156,6 @@ for (i in 1:kn[k]){
   
   dev.off()
   
-  
   # Calculate overlap
   Overlaps_RinC <- matrix(NA, ncol=8, nrow=8)
   for (p in 1:8){
@@ -185,10 +169,8 @@ for (i in 1:kn[k]){
   }
   
   # Plot histogram of overlaps
-  pdf(sprintf(paste0("D:/Teresa/Colon-final/NNMF_Liver/",ks[k],"/CellScores_perPatient_Hist_Overlap_Factor_%s.pdf"), i),width=4,height=4,paper='special') 
+  pdf(sprintf(paste0(data.loc, "NNMF_Liver/",ks[k],"/CellScores_perPatient_Hist_Overlap_Factor_%s.pdf"), i),width=4,height=4,paper='special') 
   #hcol <- brewer.pal(10,"Set3")
   hist(Overlaps_RinC)
-  
   dev.off() 
-  
 }
