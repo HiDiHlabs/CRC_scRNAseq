@@ -7,12 +7,13 @@
 library(Biobase)
 library(CMScaller)
 
-pids <- c("HD1495-P1", "HD1509-P2", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2596-P6", "HD2779-P7", "HD2791-P8", "HD3192-P9", "HD3254-P10", "HD3371-P11", "POP1-P12")
+pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
 
+data.loc = ### INSERT DATA FOLDER HERE ###
 
 for (i in 1:12){
   
-  folderpath <- paste0("D:/Teresa/Colon-final/DEA_PatientsSeparately/",pids[i],"/")
+  folderpath <- paste0(data.loc, "DEA_PatientsSeparately/",pids[i],"/")
   load(paste0(folderpath, "patData_SeuratObject_after_tSNE.Rdata"))
   
   # get RNA-seq counts from data
@@ -36,18 +37,16 @@ for (i in 1:12){
 }
 
 rownames(CMS_predictions) <- pids
-write.csv(CMS_predictions, file="D:/Teresa/Colon-final/CMS_predictions.csv")
-
-
+write.csv(CMS_predictions, file=paste0(data.loc, "CMS_predictions.csv"))
 
 ### ---------------- pooled counts for each patient ------------------------------
 
 library(Biobase)
 library(CMScaller)
 
-pids <- c("HD1495-P1", "HD1509-P2", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2596-P6", "HD2779-P7", "HD2791-P8", "HD3192-P9", "HD3254-P10", "HD3371-P11", "POP1-P12")
+pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
 
-folderpath <- "D:/Teresa/Colon-final/12patients_noMC/"
+folderpath <- paste0(data.loc, "12patients_noMC/")
 load(paste0(folderpath, "Colon_SeuratObject_after_tSNE.Rdata"))
 
 colon@meta.data$PatID <- as.character(sub("\\-.*","",colnames(colon@data)))
@@ -72,5 +71,4 @@ res <- CMScaller(emat=counts, rowNames = "symbol", FDR=0.25, doPlot=T)
 res[which(!is.na(res$prediction)),]
 table(res$prediction)
 
-
-write.csv(res, file="D:/Teresa/Colon-final/CMS_predictions_pooledCounts.csv")
+write.csv(res, file=paste0(data.loc, "CMS_predictions_pooledCounts.csv"))
