@@ -35,8 +35,7 @@ non_genic_frac <- 100
 
 ncores <- 12
 oldpids <- c("90121", "90130", "92047", "92492", "92074", "92589", "91526", "100399", "91492", "92507", "92460", "92489")
-samples <- c("combined", "HD1509", "combined", "HD1883", "sample", "HD2596", "HD2779", "HD2791", "HD3192", "HD3254", "HD3371", "POP1")
-pids <- c("HD1495-P1", "HD1509-P2", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2596-P6", "HD2779-P7", "HD2791-P8", "HD3192-P9", "HD3254-P10", "HD3371-P11", "POP1-P12")
+pids <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")
 colors <- brewer.pal(12, "Set3")
 
 cds <- read.csv(paste(folderpath, "resources/GRCh37_protein_coding.csv", sep=""))[,1]
@@ -45,8 +44,7 @@ print("Loading expression matrices...")
 col <- c()
 for (i in 1:12) {
   printf("PID: %s\n", oldpids[i])
-  printf("Sample: %s\n", samples[i])
-  load(sprintf(paste(folderpath, "rawdata/expression-%s-%s-%d_%d_%d_%d.Rdata", sep=""), oldpids[i], samples[i], total_reads, coding_genes, mito_frac, non_genic_frac))
+  load(sprintf(paste(folderpath, "rawdata/expression-%s-%d_%d_%d_%d.Rdata", sep=""), oldpids[i], total_reads, coding_genes, mito_frac, non_genic_frac))
   
   outliers <- c()
   if (oldpids[i] == "92074") {
