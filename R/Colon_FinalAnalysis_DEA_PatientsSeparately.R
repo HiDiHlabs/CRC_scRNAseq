@@ -1,15 +1,16 @@
 ### ----------------------- DEA for each patient separately ------------------------------
 
+data.loc = ### INSERT DATA FOLDER HERE ###
+
 colon_for_DEA <- colon
 
 colon_for_DEA@meta.data$PatID <- as.character(sub("\\-.*","",colnames(colon_for_DEA@data)))
 
 colon_for_DEA <- SetAllIdent(object = colon_for_DEA, id = "PatID")
 
-### THIS LOOP IS NOT WORKING YET ###
 for (i in 1:12){
   
-  folderpath <- paste0("D:/Teresa/Colon-final/DEA_PatientsSeparately/",pids[i],"/")
+  folderpath <- paste0(data.loc, "DEA_PatientsSeparately/",pids[i],"/")
   dir.create(folderpath, showWarnings = FALSE)
   
   # subset data from this patient
@@ -26,12 +27,6 @@ for (i in 1:12){
                             x.low.cutoff = -Inf, x.high.cutoff = Inf, y.cutoff = 0.5)
   
   length(patData@var.genes)
-  
-  # violin plots of reads per cell and detected genes per cell
-  
-  
-  
-  
   
   ### ----------------------- PCA and tSNE ------------------------------
   
@@ -53,12 +48,10 @@ for (i in 1:12){
   VizPCA(object = patData, pcs.use = 1:9)
   dev.off()
   
-  
   # Perform clustering
   patData <- FindClusters(object = patData, reduction.type = "pca", dims.use = 1:sigPC, 
                         resolution = 1.0, print.output = 0, save.SNN = TRUE)
   patData <- StashIdent(object = patData, save.name = "ClusterNames_1.0")
-  
   
   # Perform tSNE
   patData <- RunTSNE(object = patData, dims.use = 1:sigPC, do.fast = TRUE)
@@ -74,7 +67,6 @@ for (i in 1:12){
     write.csv(gene.loadings, file=paste0(folderpath,sprintf("GeneLoadings_full_PC_%s.csv",pc)))
   }
   
-  
   ### ----------------------- PCA and tSNE plots ------------------------------
   
   # PCA plot labelled by Cluster IDs
@@ -88,7 +80,6 @@ for (i in 1:12){
   pdf(filename,width=8,height=7) 
   TSNEPlot(object = patData, dim.1 = 1, dim.2 = 2, do.return = TRUE, group.by = "ClusterNames_1.0", no.legend = F, do.label = F)
   dev.off()
-  
   
   ### -------------------------- DEA for this patient ------------------------------------
   
@@ -111,9 +102,3 @@ for (i in 1:12){
   }
   
 }
-
-
-
-
-
-
