@@ -2,50 +2,48 @@
 ##### Define cell types vs. cell states ###################
 ###################################################################################
 
-
 require(ggplot2)
 require(reshape2)
 require(RColorBrewer)
 library(data.table)
 library(NMF)
 
+data.loc = ### INSERT DATA FOLDER HERE ###
+
 # load Seurat object (12 patients, mean-centered)
-load("D:/Teresa/Colon-final/12patients_MC/Colon_SeuratObject_after_tSNE.Rdata")
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8", "HD3254-P10", "HD3371-P11")
+load(paste0(data.loc, "12patients_MC/Colon_SeuratObject_after_tSNE.Rdata"))
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8", "P10", "P11")
 FactorNames <- c("Immune_response", "Hypoxia/Glycolysis", "Cell_cycle", "OXPHOS",
                  "MYC", "Stem", "DCS", "Fatty_acid")
 log.cpm.matrix.mc <- colon@raw.data[,sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids)]
 
 # load GeneSetScores list object
-load("D:/Teresa/Colon-final/FactorScoring/GeneSetScores_topGenesFromMergedFactors.Rdata")
+load(paste0(data.loc, "FactorScoring/GeneSetScores_topGenesFromMergedFactors.Rdata"))
 
 # load gene lists defining cell types and cell states
-Definition_CellTypes_in <- read.table("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/Definition_CellTypes.csv", header = T, sep = ";")
-Definition_CellStates_in <- read.table("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/Definition_CellStates.csv", header = T, sep = ";")    
+Definition_CellTypes_in <- read.table(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/Definition_CellTypes.csv"), header = T, sep = ";")
+Definition_CellStates_in <- read.table(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/Definition_CellStates.csv"), header = T, sep = ";")    
 # turn into list objects
 Definition_CellTypes_GeneList <- list()
 for (c in 1:dim(Definition_CellTypes_in)[2]){
   Definition_CellTypes_GeneList[[c]] <- as.character(Definition_CellTypes_in[,c])
 }
-save(Definition_CellTypes_GeneList, file="D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/Definition_CellTypes_GeneList.Rdata")
+save(Definition_CellTypes_GeneList, file=paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/Definition_CellTypes_GeneList.Rdata"))
 Definition_CellStates_GeneList <- list()
 for (c in 1:dim(Definition_CellStates_in)[2]){
   Definition_CellStates_GeneList[[c]] <- as.character(Definition_CellStates_in[,c])[1:(min(c((which(Definition_CellStates_in[[c]]=="")-1),length(Definition_CellStates_in[[c]]))))]
 }
-save(Definition_CellStates_GeneList, file="D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/Definition_CellStates_GeneList.Rdata")
+save(Definition_CellStates_GeneList, file=paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/Definition_CellStates_GeneList.Rdata"))
   
 # load annotations
-load("D:/Teresa/Colon-final/MetaData_allCells_forHeatmaps.Rdata")
+load(paste0(data.loc, "MetaData_allCells_forHeatmaps.Rdata"))
 MetaData_selectedCells <- MetaData_allCells[sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids),]
-
 
 #########  run Colon_FinalAnalysis_9b to obtain GeneSetScores matrices for cell types & cell states ###########  
 
-
-
 # -------------- 1: Cell type identification based on cell type genes -------------- 
 
-load("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/DefinedCellTypes_GeneSetScores.Rdata")
+load(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/DefinedCellTypes_GeneSetScores.Rdata"))
 
 # binarise GeneSetScores to identify cell types:
 # set cutoff for gene set scores by sd
@@ -68,7 +66,6 @@ isDCS <- significantGeneSets[,2]
 isTA <- significantGeneSets[,3]
 isTdiff <- significantGeneSets[,4]
 isNeither <- (!isStem)*(!isDCS)*(!isTA)*(!isTdiff)
-
 
 # -------------- 2: combine all identified cells into one data frame -------------- 
 
@@ -112,7 +109,7 @@ rownames(df1) <- 1:dim(df1)[1]
 
 # -------------- 3: Add scores for cell states --------------
 
-load("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/DefinedCellStates_GeneSetScores.Rdata")
+load(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/DefinedCellStates_GeneSetScores.Rdata"))
 
 df2 <- GeneSetScores[as.character(df1$CellName),]
 colnames(df2) <- c("CellCycle" , "OXPHOS"  ,   "Hypoxia"   , "Glycolysis" ,"FattyAcid"  )
@@ -121,8 +118,6 @@ df2 <- as.data.frame(df2)
 rownames(df2) <- 1:dim(df1)[1]
 df <- cbind(df1,df2)
 
-
-
 # ---------------------------- 4: Violin plots and t-tests ----------------------------
 
 # violin plots of cell states
@@ -130,7 +125,7 @@ df <- cbind(df1,df2)
 writefolder <- "CellTypes_CellStates/FattyAcid"
 #  "CellCycle"  "OXPHOS"     "Hypoxia"    "Glycolysis" "FattyAcid" 
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/%s/CellState_in_CellTypes.pdf",writefolder),width=7,height=5,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/%s/CellState_in_CellTypes.pdf"),writefolder),width=7,height=5,paper='special') 
 print(ggplot(data = df, aes(x=CellType, y=FattyAcid, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
         geom_jitter(shape=1, position=position_jitter(0.2), size=0.1, color="gray60") +
@@ -139,7 +134,6 @@ print(ggplot(data = df, aes(x=CellType, y=FattyAcid, fill=CellType)) +
         scale_color_brewer(palette="Set3") +
         theme(legend.position="none"))
 dev.off()
-
 
 # pair-wise t-tests of cell state expression between the populations
 popNames <- c('Stem',
@@ -157,7 +151,7 @@ for (a in 2:length(popNames)){
     i = i+1
   }
 }
-write.csv(pvalues, file = sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/%s/pvalues.csv",writefolder))
+write.csv(pvalues, file = sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/%s/pvalues.csv"),writefolder))
 
 
 # control: random sets of cells
@@ -172,7 +166,4 @@ for (a in 2:length(popNames)){
     i = i+1
   }
 }
-write.csv(pvalues_ctrl, file = sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM_new/%s/pvalues_ctrl.csv",writefolder))
-
-
-
+write.csv(pvalues_ctrl, file = sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM_new/%s/pvalues_ctrl.csv"),writefolder))
