@@ -1,3 +1,5 @@
+data.loc = ### INSERT DATA FOLDER HERE ###
+
 # ----------- determine fraction of cells expressing more than one gene set ---------- 
 
 hmcol<-colorRampPalette(brewer.pal(11,"RdBu"))(101)
@@ -18,7 +20,7 @@ for (p in 1:NrPatients){
         length(cells.to.inspect)
     }
   }
-  pdf(sprintf("D:/Teresa/Colon-final/FactorScoring/Heatmap_GeneSetOverlap_Pat_%s_mergedFactors.pdf", selected_pids[p]),width=6.5,height=6,paper='special') 
+  pdf(sprintf(paste0(data.loc, "FactorScoring/Heatmap_GeneSetOverlap_Pat_%s_mergedFactors.pdf"), selected_pids[p]),width=6.5,height=6,paper='special') 
   aheatmap(OverlapArray[p,,], 
            Rowv=T,
            Colv="Rowv",
