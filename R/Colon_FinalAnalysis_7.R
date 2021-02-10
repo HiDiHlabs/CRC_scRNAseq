@@ -8,22 +8,21 @@ require(RColorBrewer)
 library(data.table)
 library(NMF)
 
+data.loc = ### INSERT DATA FOLDER HERE ###
+
 # load Seurat object (12 patients, mean-centered)
-load("D:/Teresa/Colon-final/12patients_MC/Colon_SeuratObject_after_tSNE.Rdata")
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8", "HD3254-P10", "HD3371-P11")
+load(paste0(data.loc, "12patients_MC/Colon_SeuratObject_after_tSNE.Rdata"))
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8", "P10", "P11")
 FactorNames <- c("Immune_response", "Hypoxia/Glycolysis", "Cell_cycle", "OXPHOS",
                  "MYC", "Stem", "DCS", "Fatty_acid")
 log.cpm.matrix.mc <- colon@raw.data[,sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids)]
 
 # load GeneSetScores
-load("D:/Teresa/Colon-final/FactorScoring/GeneSetScores_mergedFactors.Rdata")
+load(paste0(data.loc, "FactorScoring/GeneSetScores_mergedFactors.Rdata"))
 
 # load annotations
-load("D:/Teresa/Colon-final/MetaData_allCells_forHeatmaps.Rdata")
+load(paste0(data.loc, "MetaData_allCells_forHeatmaps.Rdata"))
 MetaData_selectedCells <- MetaData_allCells[sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids),]
-
-
-
 
 # -------------- 1a: Cell type identification based on factor scores -------------- 
 
@@ -50,7 +49,6 @@ isOxphos <- significantGeneSets[,4]
 isHypox <- significantGeneSets[,2]
 isNeither <- (!isDCS)*(!isSTEM)*(!isCycling)*(!isOxphos)*(!isHypox)
 
-
 # -------------- 1b: Cell type identification based on marker genes -------------- 
 
 cutoff_low <- 0
@@ -71,8 +69,6 @@ isCycling <- isTOP2Ahigh
 isOxphos <- isPRDX3high
 isHypox <- isKRT20high
 isNeither <- (!isDCS)*(!isSTEM)*(!isCycling)*(!isOxphos)*(!isHypox)
-
-
 
 # -------------- 2: combine all identified cells into one data frame -------------- 
 
@@ -119,11 +115,10 @@ cellsOxphos <- data.frame(
 df <- rbind(cellsDCS,cellsSTEM,cellsCycling,cellsOxphos,cellsHypox)
 rownames(df) <- 1:dim(df)[1]
 
-
 # -------------- 3a: Add expression data from factor scores --------------
 
 # load GeneSetScores
-load("D:/Teresa/Colon-final/FactorScoring/GeneSetScores_mergedFactors.Rdata")
+load(paste0(data.loc, "FactorScoring/GeneSetScores_mergedFactors.Rdata"))
 df2 <- GeneSetScores[as.character(df$CellName),c(7,6,3,4,2)]
 colnames(df2) <- c("DCS"      , "STEM",   "Cycling",   "OXPHOS"  ,   "HypoxGlycol"  )
 
@@ -131,12 +126,10 @@ df2 <- as.data.frame(df2)
 rownames(df2) <- 1:dim(df)[1]
 df <- cbind(df,df2)
 
-
-
 # -------------- 3b: Add expression data from top 200 genes --------------
 
 # load merged factor gene lists 
-load("D:/Teresa/Colon-final/MergedFactors_GeneLists.Rdata")
+load(paste0(data.loc, "MergedFactors_GeneLists.Rdata"))
 
 topGenes.data <- matrix(NA, nrow = ncol(log.cpm.matrix.mc), ncol = length(MergedFactors_GeneLists))
 for (f in 1:length(MergedFactors_GeneLists)){
@@ -151,15 +144,13 @@ colnames(df2) <- c("Immune_response"  ,  "HypoxGlycol" ,"Cell_cycle"      ,   "O
 df2 <- as.data.frame(df2)
 df <- cbind(df,df2)
 
-
-
 # ---------------------------- 4: Violin plots and t-tests ----------------------------
 
 # violin plots of OXPHOS and HypoxGlycol in the populations
 
 writefolder <- "MarkerGenes_Factor"
   
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/Factor_OXPHOS_inDCSvsSTEM.pdf",writefolder),width=7,height=5,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/Factor_OXPHOS_inDCSvsSTEM.pdf"),writefolder),width=7,height=5,paper='special') 
 print(ggplot(data = df, aes(x=CellType, y=OXPHOS, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
         geom_jitter(shape=1, position=position_jitter(0.2), size=0.1, color="gray60") +
@@ -169,7 +160,7 @@ print(ggplot(data = df, aes(x=CellType, y=OXPHOS, fill=CellType)) +
         theme(legend.position="none"))
 dev.off()
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/Factor_HypoxGlycol_inDCSvsSTEM.pdf",writefolder),width=7,height=5,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/Factor_HypoxGlycol_inDCSvsSTEM.pdf"),writefolder),width=7,height=5,paper='special') 
 print(ggplot(data = df, aes(x=CellType, y=HypoxGlycol, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
         geom_jitter(shape=1, position=position_jitter(0.2), size=0.1, color="gray60") +
@@ -179,10 +170,9 @@ print(ggplot(data = df, aes(x=CellType, y=HypoxGlycol, fill=CellType)) +
         theme(legend.position="none"))
 dev.off()
 
-
 # violin plots of OXPHOS and HypoxGlycol excluding quenched populations 
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/Factor_OXPHOS_inDCSvsSTEM_exclQuenched.pdf",writefolder),width=6,height=5,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/Factor_OXPHOS_inDCSvsSTEM_exclQuenched.pdf"),writefolder),width=6,height=5,paper='special') 
 df.exclQuenched <- df[!df$CellType=='OxPhos',]
 print(ggplot(data = df.exclQuenched, aes(x=CellType, y=OXPHOS, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
@@ -193,7 +183,7 @@ print(ggplot(data = df.exclQuenched, aes(x=CellType, y=OXPHOS, fill=CellType)) +
         theme(legend.position="none"))
 dev.off()
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/Factor_HypoxGlycol_inDCSvsSTEM_exclQuenched.pdf",writefolder),width=6,height=5,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/Factor_HypoxGlycol_inDCSvsSTEM_exclQuenched.pdf"),writefolder),width=6,height=5,paper='special') 
 df.exclQuenched <- df[!df$CellType=='Hypox',]
 print(ggplot(data = df.exclQuenched, aes(x=CellType, y=HypoxGlycol, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
@@ -224,9 +214,8 @@ for (a in 2:length(popNames)){
     i = i+1
   }
 }
-write.csv(pvalues_OXPHOS, file = sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/pvalues_OXPHOS.csv",writefolder))
-write.csv(pvalues_Hypox, file = sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/pvalues_Hypox.csv",writefolder))
-
+write.csv(pvalues_OXPHOS, file = sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/pvalues_OXPHOS.csv"),writefolder))
+write.csv(pvalues_Hypox, file = sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/pvalues_Hypox.csv"),writefolder))
 
 # control: random sets of cells
 pvalues_ctrl_OXPHOS <- rep(NA, choose(length(popNames),2))
@@ -243,18 +232,5 @@ for (a in 2:length(popNames)){
     i = i+1
   }
 }
-write.csv(pvalues_ctrl_OXPHOS, file = sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/pvalues_ctrl_OXPHOS.csv",writefolder))
-write.csv(pvalues_ctrl_Hypox, file = sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/%s/pvalues_ctrl_Hypox.csv",writefolder))
-
-
-
-
-
-
-
-
-
-
-
-
-
+write.csv(pvalues_ctrl_OXPHOS, file = sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/pvalues_ctrl_OXPHOS.csv",writefolder))
+write.csv(pvalues_ctrl_Hypox, file = sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/%s/pvalues_ctrl_Hypox.csv",writefolder))
