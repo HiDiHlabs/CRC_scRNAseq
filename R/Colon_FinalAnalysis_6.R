@@ -5,20 +5,22 @@
 
 library(NMF)
 
+data.loc = ### INSERT DATA FOLDER HERE ###
+
 # load Seurat object (12 patients, mean-centered)
-load("D:/Teresa/Colon-final/12patients_MC/Colon_SeuratObject_after_tSNE.Rdata")
-selected_pids <- c("HD1495-P1", "HD1664-P3", "HD1883-P4", "HD1960-P5", "HD2779-P7", "HD2791-P8", "HD3254-P10", "HD3371-P11")
+load(paste0(data.loc, "12patients_MC/Colon_SeuratObject_after_tSNE.Rdata"))
+selected_pids <- c("P1", "P3", "P4", "P5", "P7", "P8", "P10", "P11")
 FactorNames <- c("Immune_response", "Hypoxia/Glycolysis", "Cell_cycle", "OXPHOS",
                  "MYC", "Stem", "DCS", "Fatty_acid")
 
 # load GeneSetScores
-load("D:/Teresa/Colon-final/FactorScoring/GeneSetScores_topGenesFromMergedFactors.Rdata")
+load(paste0(data.loc, "FactorScoring/GeneSetScores_topGenesFromMergedFactors.Rdata"))
 
 # collate data for heatmap
 hm.data <- GeneSetScores
 
 # load annotations for heatmap
-load("D:/Teresa/Colon-final/MetaData_allCells_forHeatmaps.Rdata")
+load(paste0(data.loc, "MetaData_allCells_forHeatmaps.Rdata"))
 
 MetaData_selectedCells <- MetaData_allCells[sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids),]
 # drop factor levels that are not in the selected data frame
@@ -46,7 +48,7 @@ hmcol = colorRampPalette(brewer.pal(11,"RdBu"))(101)
 nmf.options(grid.patch=TRUE)
 
 Mat <- t(GeneSetScores)
-pdf("D:/Teresa/Colon-final/FactorScoring/heatmap_mergedfactors_GeneSetScores.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "FactorScoring/heatmap_mergedfactors_GeneSetScores.pdf"),width=20,height=9,paper='special') 
 NMF::aheatmap(Mat, 
               scale="none", 
               revC=TRUE, 
@@ -61,8 +63,6 @@ NMF::aheatmap(Mat,
 )
 dev.off()
 
-
-
 # ---------------- for LGR5-high cells only ----------------
 
 selected_LGR5expr <- colon@scale.data["LGR5",rownames(GeneSetScores)]
@@ -74,7 +74,7 @@ lgr5high.idx <- selected_LGR5expr>1
 hm.data <- GeneSetScores
 
 # load annotations for heatmap
-load("D:/Teresa/Colon-final/MetaData_allCells_forHeatmaps.Rdata")
+load(paste0(data.loc, "MetaData_allCells_forHeatmaps.Rdata"))
 
 MetaData_selectedCells <- MetaData_allCells[sub("\\-.*","",colon@cell.names) %in% sub("\\-.*","",selected_pids),]
 # drop factor levels that are not in the selected data frame
@@ -103,7 +103,7 @@ hmcol = colorRampPalette(brewer.pal(11,"RdBu"))(101)
 nmf.options(grid.patch=TRUE)
 
 Mat <- t(GeneSetScores[lgr5high.idx,])
-pdf("D:/Teresa/Colon-final/FactorScoring/heatmap_mergedfactors_GeneSetScores_LGR5highCells.pdf",width=20,height=9,paper='special') 
+pdf(paste0(data.loc, "FactorScoring/heatmap_mergedfactors_GeneSetScores_LGR5highCells.pdf"),width=20,height=9,paper='special') 
 NMF::aheatmap(Mat, 
               scale="none", 
               revC=TRUE, 
@@ -117,9 +117,6 @@ NMF::aheatmap(Mat,
               labCol = rep("",ncol(Mat))
 )
 dev.off()
-
-
-
 
 # -----------Violin plot of OXPHOS expression in DCS and Stem cells ---------------
 
@@ -186,12 +183,11 @@ colnames(df2) <- c("Immune_response"  ,  "HypoxGlycol" ,"Cell_cycle"      ,   "O
 df2 <- as.data.frame(df2)
 df <- cbind(df,df2)
 
-
 # select factor
 
 i="OXPHOS"
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/Factor_%s_inDCSvsSTEM.pdf", i),width=6,height=6,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/Factor_%s_inDCSvsSTEM.pdf"), i),width=6,height=6,paper='special') 
 
 print(ggplot(data = df, aes(x=CellType, y=OXPHOS, fill=CellType)) + 
         geom_violin(trim=T) +
@@ -202,7 +198,6 @@ print(ggplot(data = df, aes(x=CellType, y=OXPHOS, fill=CellType)) +
         theme(legend.position="none"))
 
 dev.off()
-
 
 # -----------Violin plots of factor expression in DCS, Stem and cycling cells (based on factor scores) ---------------
 
@@ -257,12 +252,11 @@ colnames(df2) <- c("Immune_response"  ,  "HypoxGlycol" ,"Cell_cycle"      ,   "O
 df2 <- as.data.frame(df2)
 df <- cbind(df,df2)
 
-
 # select factor
 
 i="OXPHOS"
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/Factor_%s_inDCSvsSTEMvsCycling.pdf", i),width=12,height=6,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/Factor_%s_inDCSvsSTEMvsCycling.pdf"), i),width=12,height=6,paper='special') 
 
 print(ggplot(data = df, aes(x=CellType, y=OXPHOS, fill=CellType)) + 
         geom_violin(trim=T) +
@@ -273,9 +267,6 @@ print(ggplot(data = df, aes(x=CellType, y=OXPHOS, fill=CellType)) +
         theme(legend.position="none"))
 
 dev.off()
-
-
-
 
 # -----------Violin plots of factor expression in DCS, Stem and cycling cells (individually, based on factor scores) ---------------
 
@@ -332,12 +323,11 @@ colnames(df2) <- c("Immune_response"  ,  "HypoxGlycol" ,"Cell_cycle"      ,   "O
 df2 <- as.data.frame(df2)
 df <- cbind(df,df2)
 
-
 # select factor
 
 i="HypoxGlycol"
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/Factor_%s_inDCSvsSTEMvsCycling.pdf", i),width=12,height=6,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/Factor_%s_inDCSvsSTEMvsCycling.pdf"), i),width=12,height=6,paper='special') 
 
 print(ggplot(data = df, aes(x=CellType, y=HypoxGlycol, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
@@ -349,12 +339,10 @@ print(ggplot(data = df, aes(x=CellType, y=HypoxGlycol, fill=CellType)) +
 
 dev.off()
 
-
-
 # -----------Violin plots of factor expression in DCS, Stem and cycling cells (individually, based on top 200 genes from 8 merged factors) ---------------
 
 # Load merged factor gene lists - use merger of top genes for merged factors
-load("D:/Teresa/Colon-final/MergedFactors_GeneLists.Rdata")
+load(paste0(data.loc, "MergedFactors_GeneLists.Rdata"))
 
 df <- data.frame(
   CellName = rownames(hm.data),
@@ -362,7 +350,6 @@ df <- data.frame(
   CellType = t(CellType),
   row.names = 1
 )
-
 
 topGenes.data <- matrix(NA, nrow = dim(hm.data)[1], ncol =length(MergedFactors_GeneLists))
 for (f in 1:length(MergedFactors_GeneLists)){
@@ -376,12 +363,11 @@ colnames(df2) <- c("Immune_response"  ,  "HypoxGlycol" ,"Cell_cycle"      ,   "O
 df2 <- as.data.frame(df2)
 df <- cbind(df,df2)
 
-
 # select factor
 
 i="HypoxGlycol"
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/topGenes_Factor_%s_inDCSvsSTEMvsCycling.pdf", i),width=12,height=6,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/topGenes_Factor_%s_inDCSvsSTEMvsCycling.pdf"), i),width=12,height=6,paper='special') 
 
 print(ggplot(data = df, aes(x=CellType, y=HypoxGlycol, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
@@ -393,11 +379,10 @@ print(ggplot(data = df, aes(x=CellType, y=HypoxGlycol, fill=CellType)) +
 
 dev.off()
 
-
 # -----------Violin plots of factor expression in DCS, Stem and cycling cells (individually, based on top 200 genes from 8 merged factors) ---------------
 
 # Load unmerged factor gene lists
-CuratedGenes <- read.table("D:/Teresa/Colon-final/NNMF_LGR5/CuratedFactorList.txt",header = T)[1:200,]
+CuratedGenes <- read.table(paste0(data.loc, "NNMF_LGR5/CuratedFactorList.txt"),header = T)[1:200,]
 
 df <- data.frame(
   CellName = rownames(hm.data),
@@ -405,7 +390,6 @@ df <- data.frame(
   CellType = CellType,
   row.names = 1
 )
-
 
 topGenes.data <- matrix(NA, nrow = dim(hm.data)[1], ncol = dim(CuratedGenes)[2])
 for (f in 1:dim(CuratedGenes)[2]){
@@ -418,12 +402,11 @@ colnames(df2) <- colnames(CuratedGenes)
 df2 <- as.data.frame(df2)
 df <- cbind(df,df2)
 
-
 # select factor
 
 i="Factor_23"
 
-pdf(sprintf("D:/Teresa/Colon-final/OXPHOS_in_DCS_vs_STEM/unmergedTopGenes_%s_inDCSvsSTEMvsCycling.pdf", i),width=12,height=6,paper='special') 
+pdf(sprintf(paste0(data.loc, "OXPHOS_in_DCS_vs_STEM/unmergedTopGenes_%s_inDCSvsSTEMvsCycling.pdf"), i),width=12,height=6,paper='special') 
 
 print(ggplot(data = df, aes(x=CellType, y=Factor_23, fill=CellType)) + 
         geom_violin(trim=T, scale='count') +
@@ -434,9 +417,6 @@ print(ggplot(data = df, aes(x=CellType, y=Factor_23, fill=CellType)) +
         theme(legend.position="none"))
 
 dev.off()
-
-
-
 
 # ----------- t-test of OXPHOS and HypoxGlycol in DCS vs. STEM---------------
 
@@ -456,9 +436,6 @@ toplot <- rbind(dcs, stem)
 
 ggplot(toplot, aes(HypoxGlycol, fill = celltype)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
 ggplot(toplot, aes(OXPHOS, fill = celltype)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
-
-
-
 
 # ----------- Does LGR5 correlate with OXPHOS? ---------------
 
@@ -492,7 +469,6 @@ defa5high$celltype <- 'defa5high'
 top2ahigh$celltype <- 'top2ahigh'
 mki67high$celltype <- 'mki67high'
 
-
 toplot <- rbind(lgr5high, defa5high, top2ahigh, mki67high)
 toplot <- rbind(lgr5high, defa5high)
 
@@ -517,6 +493,3 @@ ctrl2 <- data.frame(HypoxGlycol = df$HypoxGlycol[rndctrl2],
 
 t.test(ctrl1$HypoxGlycol,ctrl2$HypoxGlycol)
 t.test(ctrl1$OXPHOS,ctrl2$OXPHOS)
-
-
-
